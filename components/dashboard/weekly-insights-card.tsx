@@ -10,8 +10,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Brain, Sparkles } from "lucide-react";
+import { 
+  Loader2, 
+  Brain, 
+  Clock, 
+  AlertCircle, 
+  CheckCircle, 
+  XCircle,
+  MessageSquare,
+  ArrowUpRight,
+  Calendar,
+  Timer,
+  Zap,
+  AlertTriangle,
+  Mail
+} from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Progress } from "@/components/ui/progress";
 
 interface WeeklyInsightsCardProps {
   messages: any[];
@@ -20,62 +35,259 @@ interface WeeklyInsightsCardProps {
 const genAI = new GoogleGenerativeAI("AIzaSyAw5aBd0IVMVrXg3IUZWEOqZe18taHND6Y");
 
 interface WeeklyInsights {
-  weekSummary: {
-    title: string;
-    description: string;
-    highlights: string[];
-    mood: "positive" | "neutral" | "negative";
+  procrastination: {
+    pending_replies: {
+      contact: string;
+      message: string;
+      waiting_since: string;
+      urgency: "high" | "medium" | "low";
+    }[];
+    overdue_tasks: {
+      task: string;
+      deadline: string;
+      days_overdue: number;
+    }[];
+    completion_rate: number;
+  };
+  focus_metrics: {
+    average_response_time: string;
+    tasks_completed_on_time: number;
+    tasks_completed_late: number;
+    unfinished_tasks: number;
     productivity_score: number;
   };
-  summary: {
-    title: string;
-    overview: string;
-    key_metrics: {
-      total_messages: number;
-      important_topics: string[];
-      action_items: number;
-    };
+  communication: {
+    unread_important: number;
+    pending_followups: number;
+    missed_meetings: number;
+    upcoming_deadlines: {
+      task: string;
+      date: string;
+      time_left: string;
+    }[];
   };
-  categories: {
-    name: string;
-    count: number;
-    highlights: string[];
-  }[];
-  trends: {
-    topic: string;
-    frequency: number;
-    sentiment: "positive" | "neutral" | "negative";
-  }[];
-  recommendations: {
-    priority_tasks: string[];
-    follow_ups: string[];
+  weekly_stats: {
+    total_tasks: number;
+    completed_tasks: number;
+    new_tasks: number;
+    productivity_trend: number[];
+    peak_productivity_time: string;
+  };
+  improvement_areas: {
+    category: string;
+    score: number;
     suggestions: string[];
-  };
+  }[];
 }
 
-const MysticBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Animated gradient background */}
-    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-gradient" />
-    
-    {/* Floating particles */}
-    {[...Array(20)].map((_, i) => (
-      <div
-        key={i}
-        className="absolute w-1 h-1 bg-white/20 rounded-full animate-float"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 5}s`,
-          animationDuration: `${5 + Math.random() * 5}s`,
-        }}
-      />
-    ))}
-    
-    {/* Glowing orbs */}
-    <div className="absolute top-0 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-    <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-  </div>
+const MagicalBackground = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Dark base layer */}
+      <div className="absolute inset-0 bg-black/90" />
+      
+      {/* Animated gradient background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-cyan-500/10 to-sky-500/10 animate-gradient" style={{ animationDelay: "-2s" }} />
+      </div>
+      
+      {/* Animated aura effect */}
+      <div className="absolute inset-0">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-full animate-pulse"
+            style={{
+              transform: `scale(${1 + i * 0.1})`,
+              animationDelay: `${i * 0.5}s`,
+              animationDuration: "3s",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0">
+        {[...Array(50)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/20 rounded-full"
+            initial={{ 
+              x: Math.random() * 100 + "%",
+              y: Math.random() * 100 + "%",
+              scale: 0
+            }}
+            animate={{ 
+              x: Math.random() * 100 + "%",
+              y: Math.random() * 100 + "%",
+              scale: [0, 1, 0]
+            }}
+            transition={{
+              duration: Math.random() * 3 + 2,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: Math.random() * 2
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ProcrastinationCard = ({ data }: { data: WeeklyInsights['procrastination'] }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10"
+  >
+    <div className="flex items-center gap-3 mb-4">
+      <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+        <Timer className="h-5 w-5 text-red-400" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white">Pending Replies</h3>
+        <p className="text-white/60 text-sm">Requires your attention</p>
+      </div>
+    </div>
+    <div className="space-y-4">
+      {data.pending_replies.map((reply, i) => (
+        <div key={i} className="bg-white/5 rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-white">{reply.contact}</span>
+            <span className={`px-2 py-1 rounded-full text-xs ${
+              reply.urgency === "high" 
+                ? "bg-red-500/20 text-red-400" 
+                : reply.urgency === "medium"
+                ? "bg-yellow-500/20 text-yellow-400"
+                : "bg-blue-500/20 text-blue-400"
+            }`}>
+              {reply.urgency} priority
+            </span>
+          </div>
+          <p className="text-sm text-white/60">{reply.message}</p>
+          <div className="flex items-center gap-2 text-sm text-white/40">
+            <Clock className="h-3 w-3" />
+            <span>Waiting since {reply.waiting_since}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const FocusMetricsCard = ({ data }: { data: WeeklyInsights['focus_metrics'] }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10"
+  >
+    <div className="flex items-center gap-3 mb-6">
+      <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+        <Zap className="h-5 w-5 text-purple-400" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white">Focus Metrics</h3>
+        <p className="text-white/60 text-sm">Your productivity insights</p>
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="bg-white/5 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="h-4 w-4 text-purple-400" />
+          <span className="text-sm text-white/60">Avg. Response Time</span>
+        </div>
+        <p className="text-2xl font-bold text-white">{data.average_response_time}</p>
+      </div>
+      <div className="bg-white/5 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle className="h-4 w-4 text-emerald-400" />
+          <span className="text-sm text-white/60">On-time Completion</span>
+        </div>
+        <p className="text-2xl font-bold text-white">{data.tasks_completed_on_time}</p>
+      </div>
+    </div>
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-white/60">Productivity Score</span>
+        <span className="text-sm font-medium text-white">{data.productivity_score}%</span>
+      </div>
+      <Progress value={data.productivity_score} className="h-2" />
+    </div>
+  </motion.div>
+);
+
+const UpcomingDeadlinesCard = ({ data }: { data: WeeklyInsights['communication']['upcoming_deadlines'] }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10"
+  >
+    <div className="flex items-center gap-3 mb-6">
+      <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+        <Calendar className="h-5 w-5 text-amber-400" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white">Upcoming Deadlines</h3>
+        <p className="text-white/60 text-sm">Don't miss these</p>
+      </div>
+    </div>
+    <div className="space-y-3">
+      {data.map((deadline, i) => (
+        <div key={i} className="bg-white/5 rounded-lg p-4 flex items-center justify-between">
+          <div>
+            <p className="font-medium text-white">{deadline.task}</p>
+            <div className="flex items-center gap-2 mt-1 text-sm text-white/60">
+              <Calendar className="h-3 w-3" />
+              <span>{deadline.date}</span>
+            </div>
+          </div>
+          <div className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm">
+            {deadline.time_left}
+          </div>
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const ImprovementAreasCard = ({ data }: { data: WeeklyInsights['improvement_areas'] }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10"
+  >
+    <div className="flex items-center gap-3 mb-6">
+      <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+        <ArrowUpRight className="h-5 w-5 text-blue-400" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white">Areas to Improve</h3>
+        <p className="text-white/60 text-sm">Personalized suggestions</p>
+      </div>
+    </div>
+    <div className="space-y-4">
+      {data.map((area, i) => (
+        <div key={i} className="bg-white/5 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-medium text-white">{area.category}</span>
+            <span className="text-sm text-white/60">Score: {area.score}/100</span>
+          </div>
+          <Progress value={area.score} className="h-1.5 mb-3" />
+          <ul className="space-y-2">
+            {area.suggestions.map((suggestion, j) => (
+              <li key={j} className="text-sm text-white/60 flex items-start gap-2">
+                <ArrowUpRight className="h-4 w-4 text-blue-400 mt-0.5" />
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </motion.div>
 );
 
 export function WeeklyInsightsCard({ messages }: WeeklyInsightsCardProps) {
@@ -88,60 +300,57 @@ export function WeeklyInsightsCard({ messages }: WeeklyInsightsCardProps) {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-      const prompt = `Analyze these WhatsApp messages and provide insights in JSON format:
-      ${JSON.stringify(messages)}
-      
-      Return a JSON object with the following structure:
-      {
-        "weekSummary": {
-          "title": "string - a creative title for the week",
-          "description": "string - a paragraph summarizing the week's activities and mood",
-          "highlights": ["string - key moments or achievements"],
-          "mood": "positive" | "neutral" | "negative",
-          "productivity_score": number (0-100)
-        },
-        "summary": {
-          "title": "string",
-          "overview": "string",
-          "key_metrics": {
-            "total_messages": number,
-            "important_topics": ["string"],
-            "action_items": number
-          }
-        },
-        "categories": [{
-          "name": "string",
-          "count": number,
-          "highlights": ["string"]
-        }],
-        "trends": [{
-          "topic": "string",
-          "frequency": number,
-          "sentiment": "positive" | "neutral" | "negative"
-        }],
-        "recommendations": {
-          "priority_tasks": ["string"],
-          "follow_ups": ["string"],
-          "suggestions": ["string"]
-        }
+      const prompt = `Analyze these WhatsApp messages and provide insights focused on task management and procrastination in JSON format. Include data about pending replies, overdue tasks, focus metrics, and improvement suggestions. The response should match this TypeScript interface:
+
+      interface WeeklyInsights {
+        procrastination: {
+          pending_replies: {
+            contact: string;
+            message: string;
+            waiting_since: string;
+            urgency: "high" | "medium" | "low";
+          }[];
+          overdue_tasks: {
+            task: string;
+            deadline: string;
+            days_overdue: number;
+          }[];
+          completion_rate: number;
+        };
+        focus_metrics: {
+          average_response_time: string;
+          tasks_completed_on_time: number;
+          tasks_completed_late: number;
+          unfinished_tasks: number;
+          productivity_score: number;
+        };
+        communication: {
+          unread_important: number;
+          pending_followups: number;
+          missed_meetings: number;
+          upcoming_deadlines: {
+            task: string;
+            date: string;
+            time_left: string;
+          }[];
+        };
+        weekly_stats: {
+          total_tasks: number;
+          completed_tasks: number;
+          new_tasks: number;
+          productivity_trend: number[];
+          peak_productivity_time: string;
+        };
+        improvement_areas: {
+          category: string;
+          score: number;
+          suggestions: string[];
+        }[];
       }
-      
-      Focus on:
-      1. Creating an engaging narrative about the week
-      2. Identifying key achievements and moments
-      3. Analyzing communication patterns and trends
-      4. Providing actionable insights and recommendations`;
 
-      const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
-      });
+      Messages to analyze: ${JSON.stringify(messages)}`;
 
+      const result = await model.generateContent(prompt);
       const analysisText = result.response.text();
       const jsonMatch = analysisText.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch && jsonMatch[1]) {
@@ -169,219 +378,61 @@ export function WeeklyInsightsCard({ messages }: WeeklyInsightsCardProps) {
     <>
       <Button
         onClick={handleOpen}
-        className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white group"
+        className="w-full mt-4 bg-black/20 hover:bg-black/30 text-white group relative overflow-hidden"
         disabled={isLoading}
       >
-        <Brain className="h-4 w-4 mr-2 group-hover:animate-pulse" />
-        This Week
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Brain className="h-4 w-4 mr-2 relative z-10 group-hover:animate-pulse" />
+        <span className="relative z-10">Weekly Progress</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl h-[85vh] bg-black/90 border-white/10">
-          <MysticBackground />
-          
-          <DialogHeader className="relative">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-              <Brain className="h-6 w-6 text-blue-400" />
-              Weekly Insights
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-7xl h-[90vh] border-0 bg-transparent">
+          <div className="relative w-full h-full rounded-lg overflow-hidden bg-black/90">
+            <MagicalBackground />
+            
+            <div className="relative z-10 h-full flex flex-col">
+              <DialogHeader className="p-6">
+                <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+                  <Brain className="h-6 w-6 text-blue-400" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                    Weekly Progress & Focus Areas
+                  </span>
+                </DialogTitle>
+              </DialogHeader>
 
-          <ScrollArea className="h-full pr-4 relative">
-            {isLoading ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center h-64 space-y-4"
-              >
-                <div className="relative">
-                  <div className="absolute -inset-4 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-75 blur animate-pulse" />
-                  <div className="relative bg-black/50 backdrop-blur-xl rounded-lg p-6">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-                  </div>
-                </div>
-                <p className="text-white/60 animate-pulse">
-                  Analyzing your messages...
-                </p>
-              </motion.div>
-            ) : insights ? (
-              <AnimatePresence>
-                <div className="space-y-8 relative">
-                  {/* Week Summary Section */}
+              <ScrollArea className="flex-1 px-6 pb-6">
+                {isLoading ? (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 p-6 border border-white/10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center h-64 space-y-4"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 opacity-20 animate-pulse" />
                     <div className="relative">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Sparkles className="h-5 w-5 text-blue-400" />
-                        <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                          {insights.weekSummary.title}
-                        </h2>
-                      </div>
-                      <p className="text-white/80 leading-relaxed mb-4">
-                        {insights.weekSummary.description}
-                      </p>
-                      <div className="grid grid-cols-2 gap-4 mt-4">
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white/60">Mood</span>
-                            <span className={`px-2 py-1 rounded-full text-sm ${
-                              insights.weekSummary.mood === "positive"
-                                ? "bg-green-500/20 text-green-400"
-                                : insights.weekSummary.mood === "negative"
-                                ? "bg-red-500/20 text-red-400"
-                                : "bg-yellow-500/20 text-yellow-400"
-                            }`}>
-                              {insights.weekSummary.mood}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white/60">Productivity</span>
-                            <span className="text-blue-400 font-medium">
-                              {insights.weekSummary.productivity_score}%
-                            </span>
-                          </div>
-                          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                              style={{ width: `${insights.weekSummary.productivity_score}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <h3 className="text-sm font-medium text-white/80 mb-2">Key Highlights</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {insights.weekSummary.highlights.map((highlight, i) => (
-                            <span
-                              key={i}
-                              className="px-3 py-1 rounded-full text-sm bg-white/5 text-white/80"
-                            >
-                              {highlight}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="absolute -inset-4 rounded-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-75 blur animate-pulse" />
+                      <div className="relative bg-black/50 backdrop-blur-xl rounded-lg p-6">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
                       </div>
                     </div>
+                    <p className="text-white/60 animate-pulse">
+                      Analyzing your progress...
+                    </p>
                   </motion.div>
-
-                  {/* Summary Section */}
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-blue-500">{insights.summary.title}</h2>
-                    <p className="text-white/80 leading-relaxed">{insights.summary.overview}</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <p className="text-sm text-white/60">Total Messages</p>
-                        <p className="text-2xl font-bold text-white">{insights.summary.key_metrics.total_messages}</p>
-                      </div>
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <p className="text-sm text-white/60">Action Items</p>
-                        <p className="text-2xl font-bold text-white">{insights.summary.key_metrics.action_items}</p>
-                      </div>
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <p className="text-sm text-white/60">Important Topics</p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {insights.summary.key_metrics.important_topics.map((topic, i) => (
-                            <span key={i} className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                ) : insights ? (
+                  <div className="grid grid-cols-2 gap-6">
+                    <ProcrastinationCard data={insights.procrastination} />
+                    <FocusMetricsCard data={insights.focus_metrics} />
+                    <UpcomingDeadlinesCard data={insights.communication.upcoming_deadlines} />
+                    <ImprovementAreasCard data={insights.improvement_areas} />
                   </div>
-
-                  {/* Categories Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-purple-500">Message Categories</h3>
-                    <div className="grid gap-4">
-                      {insights.categories.map((category, i) => (
-                        <div key={i} className="bg-white/5 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-white">{category.name}</h4>
-                            <span className="text-sm text-white/60">{category.count} messages</span>
-                          </div>
-                          <ul className="space-y-1">
-                            {category.highlights.map((highlight, j) => (
-                              <li key={j} className="text-sm text-white/80">• {highlight}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
+                ) : (
+                  <div className="text-center text-white/60">
+                    No insights available. There may have been an error analyzing your messages.
                   </div>
-
-                  {/* Trends Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-emerald-500">Emerging Trends</h3>
-                    <div className="grid gap-4">
-                      {insights.trends.map((trend, i) => (
-                        <div key={i} className="bg-white/5 rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-white">{trend.topic}</h4>
-                            <span
-                              className={`text-sm px-2 py-1 rounded-full ${
-                                trend.sentiment === "positive"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : trend.sentiment === "negative"
-                                  ? "bg-red-500/20 text-red-400"
-                                  : "bg-yellow-500/20 text-yellow-400"
-                              }`}
-                            >
-                              {trend.sentiment}
-                            </span>
-                          </div>
-                          <p className="text-sm text-white/60 mt-1">
-                            Mentioned {trend.frequency} times
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Recommendations Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-amber-500">Recommendations</h3>
-                    <div className="grid gap-4">
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <h4 className="font-medium text-white mb-2">Priority Tasks</h4>
-                        <ul className="space-y-1">
-                          {insights.recommendations.priority_tasks.map((task, i) => (
-                            <li key={i} className="text-sm text-white/80">• {task}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <h4 className="font-medium text-white mb-2">Follow-ups Needed</h4>
-                        <ul className="space-y-1">
-                          {insights.recommendations.follow_ups.map((followUp, i) => (
-                            <li key={i} className="text-sm text-white/80">• {followUp}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="bg-white/5 rounded-lg p-4">
-                        <h4 className="font-medium text-white mb-2">Suggestions</h4>
-                        <ul className="space-y-1">
-                          {insights.recommendations.suggestions.map((suggestion, i) => (
-                            <li key={i} className="text-sm text-white/80">• {suggestion}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </AnimatePresence>
-            ) : (
-              <div className="text-center text-white/60">
-                No insights available. There may have been an error analyzing your messages.
-              </div>
-            )}
-          </ScrollArea>
+                )}
+              </ScrollArea>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
